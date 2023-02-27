@@ -1,7 +1,7 @@
 # create-form
 [![CircleCI](https://circleci.com/gh/react-noui/create-form.svg?style=shield)](https://circleci.com/gh/react-noui/create-form)
 
-[![npm downloads](https://img.shields.io/npm/dm/create-form.svg?style=flat-square)](https://www.npmjs.com/package/react-noui/create-form)
+[![npm downloads](https://img.shields.io/npm/dm/react-noui/create-form.svg?style=flat-square)](https://www.npmjs.com/package/react-noui/create-form)
 [![gzip size](https://img.badgesize.io/https://unpkg.com/react-noui/create-form?compression=gzip&amp;style=flat-square)](https://unpkg.com/react-noui/create-form)
 [![npm version](https://img.shields.io/npm/v/react-noui/create-forms.svg?style=flat-square)](https://www.npmjs.com/package/react-noui/create-form)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
