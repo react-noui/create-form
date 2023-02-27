@@ -1,8 +1,8 @@
 {
-  "name": "@taystack/react-create-form",
+  "name": "@react-noui/create-form",
   "version": "0.0.1",
   "packageManager": "yarn@3.1.1",
-  "description": "@taystack/react-create-form - An Anansi project",
+  "description": "@react-noui/create-form - An Anansi project",
   "scripts": {
     "lint": "eslint src --ext .ts,.tsx",
     "format": "yarn run lint --fix",
@@ -30,12 +30,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/taystack/use-form.git"
+    "url": "git+ssh://git@github.com/react-noui/create-form.git"
   },
   "bugs": {
-    "url": "https://github.com/taystack/use-form/issues"
+    "url": "https://github.com/react-noui/create-form/issues"
   },
-  "homepage": "https://github.com/taystack/use-form#readme",
+  "homepage": "https://github.com/react-noui/create-form#readme",
   "keywords": [
     "anansi"
   ],
