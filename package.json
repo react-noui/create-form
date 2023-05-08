@@ -1,6 +1,6 @@
 {
   "name": "@react-noui/create-form",
-  "version": "1.0.0-rc1",
+  "version": "1.0.1",
   "packageManager": "yarn@3.1.1",
   "description": "react-create-form - Simple, React Forms API",
   "scripts": {
