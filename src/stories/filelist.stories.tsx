@@ -30,7 +30,7 @@ function FileListFormComponent() {
       style={{ display: 'flex', flexDirection: 'column', width: 500, gap: 8 }}
     >
       <label htmlFor={fileField.name}>Select files to upload</label>
-      <input type="file" multiple {...fileField} />
+      <input multiple {...fileField} />
       <button onClick={() => form.resetAll()}>Reset</button>
       <pre>{JSON.stringify(form, null, 2)}</pre>
     </div>

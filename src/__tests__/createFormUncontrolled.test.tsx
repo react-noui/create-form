@@ -1,9 +1,7 @@
 import { renderHook } from '@testing-library/react-hooks';
 
-import {
-  createFormUncontrolled,
-  useFormUncontrolled,
-} from 'createFormUncontrolled';
+import { createFormUncontrolled } from 'createFormUncontrolled';
+import { useFormUncontrolled } from 'hooks/uncontrolled';
 
 type Login = {
   email: string;
