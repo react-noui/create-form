@@ -1,4 +1,4 @@
-import { PropsWithChildren, createContext, useContext, useMemo } from 'react';
+import { PropsWithChildren, createContext, useMemo } from 'react';
 
 import { makeOptionsUncontrolled } from 'makeOptions';
 import { makeUncontrolledField } from 'makeUncontrolledField';
@@ -42,10 +42,4 @@ export function createFormUncontrolled<T extends PrimitiveRecord>(
     Context,
     Provider,
   } as CreateFormUncontrolled<T>;
-}
-
-export function useFormUncontrolled<T extends PrimitiveRecord>(
-  form: CreateFormUncontrolled<T>,
-) {
-  return useContext(form.Context);
 }

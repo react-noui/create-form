@@ -1,7 +1,7 @@
 import { SyntheticEvent, useCallback, useState } from 'react';
 
 import { createFormUncontrolled } from 'createFormUncontrolled';
-import { useFormUncontrolled } from 'hooks/controlled';
+import { useFormUncontrolled } from 'hooks/uncontrolled';
 
 export default { title: 'Uncontrolled/LoginFormUncontrolled' };
 
