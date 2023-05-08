@@ -1,8 +1,8 @@
 {
-  "name": "@react-noui/create-form",
+  "name": "react-create-form",
   "version": "1.0.0",
   "packageManager": "yarn@3.1.1",
-  "description": "@react-noui/create-form - An Anansi project",
+  "description": "react-create-form - Simple, React Forms API",
   "scripts": {
     "lint": "eslint src --ext .ts,.tsx",
     "format": "yarn run lint --fix",
