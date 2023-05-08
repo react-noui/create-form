@@ -7,7 +7,7 @@ const options = {
   serverDir: 'dist-server/',
 
   htmlOptions: {
-    title: 'use-form',
+    title: 'create-form',
     scriptLoading: 'defer',
     template: 'index.ejs',
   },

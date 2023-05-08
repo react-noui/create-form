@@ -1,25 +1,16 @@
-import { createForm } from 'createForm';
-import { useForm, useFormRadio, useFormSelect } from 'hooks/controlled';
+import { SyntheticEvent, useCallback, useState } from 'react';
+
+import { createFormUncontrolled } from 'createFormUncontrolled';
+import { useFormUncontrolled } from 'hooks/controlled';
+import {
+  useFormRadioUncontrolled,
+  useFormSelectUncontrolled,
+} from 'hooks/uncontrolled';
 import { CreateFormOptions } from 'types';
 
-export default { title: 'forms/ExampleForm' };
+export default { title: 'Uncontrolled/ExampleFormUncontrolled' };
 
-function ErrorLabel({
-  id,
-  error,
-  children,
-}: React.PropsWithChildren<{
-  id: string;
-  error?: string;
-}>) {
-  return (
-    <label htmlFor={id} style={{ color: error ? 'red' : 'currentcolor' }}>
-      <span>{children}</span> {error ? <span>{error}</span> : null}
-    </label>
-  );
-}
-
-export const exampleForm = () => {
+export const exampleFormUncontrolled = () => {
   type Example = {
     checkbox: boolean;
     color: string;
@@ -45,19 +36,6 @@ export const exampleForm = () => {
     select: '',
   };
   const OPTIONS: CreateFormOptions<Example> = {
-    validate: {
-      text: (value) => (value.length === 0 ? 'Dirty check error' : undefined),
-      number: (value) => (value === 0 ? 'Dirty check error' : undefined),
-      checkbox: (value) => (!value ? 'Dirty check error' : undefined),
-      date: (value) =>
-        new Date(value).getTime() - new Date().getTime() < 0
-          ? 'No going back in time'
-          : undefined,
-      datetimeLocal: (value) =>
-        new Date(value).getTime() - new Date().getTime() < 0
-          ? 'No going back in time'
-          : undefined,
-    },
     props: {
       text: { placeholder: 'props.text.placeholder' },
       checkbox: { type: 'checkbox', title: 'props.checkbox.title' },
@@ -66,7 +44,7 @@ export const exampleForm = () => {
       color: { type: 'color' },
     },
   };
-  const ExampleForm = createForm<Example>(OPTIONS);
+  const ExampleForm = createFormUncontrolled<Example>(OPTIONS);
   const RADIO_NUMBER_OPTIONS = [
     { label: 'Number option 1', value: 1 },
     { label: 'Number option 2', value: 2 },
@@ -86,29 +64,42 @@ export const exampleForm = () => {
     { label: 'Option D', value: 'D' },
   ];
   function ExampleFormComponent() {
-    const form = useForm(ExampleForm);
-    const [selectField, selectOptions] = useFormSelect(
-      ExampleForm,
+    const [submission, setSubmission] = useState<Example>();
+    const form = useFormUncontrolled(ExampleForm);
+    const selectOptions = useFormSelectUncontrolled(
       form.select,
       SELECT_STRING_OPTIONS,
     );
-    const [radioNumber, radioNumberOptions] = useFormRadio(
-      ExampleForm,
+    const radioNumberOptions = useFormRadioUncontrolled(
       form.radioNumber,
       RADIO_NUMBER_OPTIONS,
     );
-    const [radioString, radioStringOptions] = useFormRadio(
-      ExampleForm,
+    const radioStringOptions = useFormRadioUncontrolled(
       form.radioString,
       RADIO_STRING_OPTIONS,
     );
-    form.checkbox;
-    form.number;
-    form.text;
+
+    const handleSubmit = useCallback(
+      (event: SyntheticEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        setSubmission(() =>
+          Object.keys(EXAMPLE_DEFAULT_VALUES).reduce(
+            (map, key) => ({
+              ...map,
+              [key]: `${data.get(key)}`,
+            }),
+            {} as Example,
+          ),
+        );
+      },
+      [setSubmission],
+    );
 
     return (
       <div style={{ display: 'flex', gap: 20 }}>
-        <div
+        <form
+          onSubmit={handleSubmit}
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -117,52 +108,40 @@ export const exampleForm = () => {
             position: 'relative',
           }}
         >
-          <ErrorLabel id={form.text.id}>text</ErrorLabel>
+          <label htmlFor={form.text.id}>text</label>
           <input {...form.text} />
-          <ErrorLabel id={form.checkbox.id}>checkbox</ErrorLabel>
+          <label htmlFor={form.checkbox.id}>checkbox</label>
           <input {...form.checkbox} />
-          <ErrorLabel id={form.color.id}>color</ErrorLabel>
+          <label htmlFor={form.color.id}>color</label>
           <input {...form.color} />
-          <ErrorLabel id={form.date.id}>date</ErrorLabel>
+          <label htmlFor={form.date.id}>date</label>
           <input type="date" {...form.date} />
-          <ErrorLabel id={form.datetimeLocal.id}>datetime-local</ErrorLabel>
+          <label htmlFor={form.datetimeLocal.id}>datetime-local</label>
           <input type="datetime-local" {...form.datetimeLocal} />
-          <ErrorLabel id={form.number.id}>number</ErrorLabel>
+          <label htmlFor={form.number.id}>number</label>
           <input {...form.number} />
-          <ErrorLabel id={form.range.id}>range</ErrorLabel>
+          <label htmlFor={form.range.id}>range</label>
           <input type="range" {...form.range} />
           <label htmlFor="radio-number-0">
-            radio (number): Selected: {radioNumber.value}
+            radio (number): Selected: {form.radioNumber.defaultValue}
           </label>
           {radioNumberOptions.map((option) => (
             <div key={option.value}>
-              <input
-                type="radio"
-                {...option}
-                id={`radio-number-${option.value}`}
-              />
-              <label htmlFor={`radio-number-${option.value}`}>
-                {option.label}
-              </label>
+              <input {...option} />
+              <label htmlFor={option.id}>{option.label}</label>
             </div>
           ))}
           <label htmlFor="radio-string-0">
-            radio (string): Selected {radioString.value}
+            radio (string): Default Selected {form.radioString.defaultValue}
           </label>
           {radioStringOptions.map((option) => (
             <div key={option.value}>
-              <input
-                type="radio"
-                {...option}
-                id={`radio-string-${option.value}`}
-              />
-              <label htmlFor={`radio-string-${option.value}`}>
-                String option {option.value}
-              </label>
+              <input {...option} />
+              <label htmlFor={option.id}>String option {option.value}</label>
             </div>
           ))}
-          <ErrorLabel id={selectField.id}>select</ErrorLabel>
-          <select {...selectField}>
+          <label htmlFor={form.select.id}>select</label>
+          <select {...form.select}>
             <option value="" disabled></option>
             {selectOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -170,10 +149,10 @@ export const exampleForm = () => {
               </option>
             ))}
           </select>
-          <button onClick={() => form.resetAll()}>Reset</button>
-        </div>
+          <button type="submit">submit</button>
+        </form>
         <pre>
-          {JSON.stringify(form, null, 2)}
+          {submission && <>{JSON.stringify(submission, null, 2)}</>}
           <br />
           {JSON.stringify(form.options, null, 2)}
         </pre>

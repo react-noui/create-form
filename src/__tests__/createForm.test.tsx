@@ -1,8 +1,9 @@
 import { act, fireEvent, render } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
-import { useContext } from 'react';
+import { ChangeEvent } from 'react';
 
 import { createForm } from 'createForm';
+import { useForm } from 'hooks/controlled';
 
 type Login = {
   email: string;
@@ -16,38 +17,94 @@ const DEFAULT_LOGIN_VALUES: Login = {
   session: false,
 };
 
+function makeChangeEvent(value: string | boolean) {
+  if (typeof value === 'boolean') {
+    return { target: { checked: value } } as ChangeEvent<HTMLInputElement>;
+  }
+  return { target: { value } } as ChangeEvent<HTMLInputElement>;
+}
+
 describe('createForm', () => {
-  test('default context - BlankForm', () => {
-    const BlankForm = createForm<{}>();
-    const { result } = renderHook(() => useContext(BlankForm.Context));
+  test('default Context - BlankForm defaults', async () => {
+    const BlankForm = createForm();
+    const { result } = renderHook(() => useForm(BlankForm));
+    expect(result.current.options).toEqual({ props: {}, validate: {} });
     expect(result.current.toJSON()).toEqual({});
     expect(result.current.toFormData()).toEqual(new FormData());
-    expect(result.current.toURLSearchParams()).toEqual(new URLSearchParams());
+    await expect(result.current.validateAll()).resolves.toEqual({});
     expect(() => {
       result.current.resetAll();
     }).not.toThrowError();
   });
 
+  test('default Provider - BlankForm.Provider defaults', () => {
+    const BlankForm = createForm();
+    const { result } = renderHook(() => useForm(BlankForm), {
+      wrapper: BlankForm.Provider,
+    });
+    expect(result.current.options).toEqual({ props: {}, validate: {} });
+  });
+
   test('form.field.set', () => {
-    const LoginForm = createForm<Login>();
-    const { result } = renderHook(() => useContext(LoginForm.Context), {
+    const LoginForm = createForm<Login>({
+      validate: {
+        password: (value) => (value.length === 0 ? 'Error' : ''),
+      },
+    });
+    const { result } = renderHook(() => useForm(LoginForm), {
       wrapper: LoginForm.Provider,
       initialProps: {
-        defaultValue: DEFAULT_LOGIN_VALUES,
+        defaultValues: DEFAULT_LOGIN_VALUES,
       },
     });
 
     act(() => {
-      result.current.email.set('foo@bar.com');
-      result.current.password.set('Password123');
-      result.current.session.set(true);
+      result.current.email.onChange(makeChangeEvent('foo@bar.com'));
+      result.current.password.onChange(makeChangeEvent('Password123'));
+      result.current.session.onChange(makeChangeEvent(true));
     });
-    expect(result.current.email.current).toEqual('foo@bar.com');
-    expect(result.current.password.current).toEqual('Password123');
-    expect(result.current.session.current).toBeTruthy();
+    expect(result.current.email.value).toEqual('foo@bar.com');
+    expect(result.current.password.value).toEqual('Password123');
+    expect(result.current.session.checked).toBeTruthy();
   });
 
   test('options.validate', () => {
+    const LoginForm = createForm<Login>({
+      validate: {
+        email: (value) =>
+          value.length === 0 ? 'Email cannot be empty' : undefined,
+        password: (value, obj) =>
+          obj.email.length === 0 || value.length === 0
+            ? 'Password cannot be empty'
+            : undefined,
+      },
+    });
+    const { result } = renderHook(() => useForm(LoginForm), {
+      wrapper: LoginForm.Provider,
+      initialProps: {
+        defaultValues: {
+          email: 'foo@gmail.com',
+          password: 'password',
+          session: false,
+        },
+      },
+    });
+
+    expect(result.current.errors.email).toBe('');
+    expect(result.current.errors.password).toBe('');
+    expect(result.current.errors.session).toBe('');
+
+    act(() => {
+      result.current.email.onChange(makeChangeEvent(''));
+      result.current.password.onChange(makeChangeEvent(''));
+      result.current.session.onChange(makeChangeEvent(true));
+    });
+    expect(result.current.errors.email).toEqual('Email cannot be empty');
+    expect(result.current.errors.password).toEqual('Password cannot be empty');
+    expect(result.current.errors.session).toEqual('');
+  });
+
+  test('form.validateAll', async () => {
     const LoginForm = createForm<Login>({
       validate: {
         email: (value) =>
@@ -56,34 +113,36 @@ describe('createForm', () => {
           value.length === 0 ? 'Password cannot be empty' : undefined,
       },
     });
-    const { result } = renderHook(() => useContext(LoginForm.Context), {
+    const { result } = renderHook(() => useForm(LoginForm), {
       wrapper: LoginForm.Provider,
       initialProps: {
-        defaultValue: {
-          email: 'foo@gmail.com',
-          password: 'password',
-          session: false,
-        },
+        defaultValues: DEFAULT_LOGIN_VALUES,
       },
     });
 
-    expect(result.current.email.error).toBeUndefined();
-    expect(result.current.password.error).toBeUndefined();
+    expect(result.current.errors.email).toBe('');
+    expect(result.current.errors.password).toBe('');
 
-    act(() => {
-      result.current.email.set('');
-      result.current.password.set('');
+    let errors: Record<string, string | undefined>;
+    await act(async () => {
+      errors = await result.current.validateAll();
+      expect(errors).toEqual({
+        email: 'Email cannot be empty',
+        password: 'Password cannot be empty',
+        session: '',
+      });
     });
-    expect(result.current.email.error).toEqual('Email cannot be empty');
-    expect(result.current.password.error).toEqual('Password cannot be empty');
+
+    expect(result.current.errors.email).toEqual('Email cannot be empty');
+    expect(result.current.errors.password).toEqual('Password cannot be empty');
   });
 
   test('form.field.setError', () => {
     const LoginForm = createForm<Login>();
-    const { result } = renderHook(() => useContext(LoginForm.Context), {
+    const { result } = renderHook(() => useForm(LoginForm), {
       wrapper: LoginForm.Provider,
       initialProps: {
-        defaultValue: {
+        defaultValues: {
           email: 'foo@gmail.com',
           password: 'password',
           session: false,
@@ -91,60 +150,60 @@ describe('createForm', () => {
       },
     });
 
-    expect(result.current.email.error).toBeUndefined();
-    expect(result.current.password.error).toBeUndefined();
+    expect(result.current.errors.email).toBe('');
+    expect(result.current.errors.password).toBe('');
 
     act(() => {
-      result.current.email.setError('Invalid email');
-      result.current.password.setError('Invalid password');
+      result.current.setError('email', 'Invalid email');
+      result.current.setError('password', 'Invalid password');
     });
 
-    expect(result.current.email.error).toEqual('Invalid email');
-    expect(result.current.password.error).toEqual('Invalid password');
+    expect(result.current.errors.email).toEqual('Invalid email');
+    expect(result.current.errors.password).toEqual('Invalid password');
 
     act(() => {
-      result.current.email.setError();
-      result.current.password.setError();
+      result.current.setError('email');
+      result.current.setError('password');
     });
 
-    expect(result.current.email.error).toBeUndefined();
-    expect(result.current.password.error).toBeUndefined();
+    expect(result.current.errors.email).toBe('');
+    expect(result.current.errors.password).toBe('');
   });
 
   test('form.field.reset', () => {
     const LoginForm = createForm<Login>();
-    const { result } = renderHook(() => useContext(LoginForm.Context), {
+    const { result } = renderHook(() => useForm(LoginForm), {
       wrapper: LoginForm.Provider,
       initialProps: {
-        defaultValue: DEFAULT_LOGIN_VALUES,
+        defaultValues: DEFAULT_LOGIN_VALUES,
       },
     });
 
     act(() => {
-      result.current.email.set('foo@bar.com');
-      result.current.password.set('Password123');
-      result.current.session.set(true);
+      result.current.email.onChange(makeChangeEvent('foo@bar.com'));
+      result.current.password.onChange(makeChangeEvent('Password123'));
+      result.current.session.onChange(makeChangeEvent(true));
     });
 
     act(() => {
-      result.current.email.reset();
+      result.current.reset('email');
     });
-    expect(result.current.email.current).toEqual(DEFAULT_LOGIN_VALUES.email);
+    expect(result.current.email.value).toEqual(DEFAULT_LOGIN_VALUES.email);
   });
 
   test('form.resetAll', () => {
     const LoginForm = createForm<Login>();
-    const { result } = renderHook(() => useContext(LoginForm.Context), {
+    const { result } = renderHook(() => useForm(LoginForm), {
       wrapper: LoginForm.Provider,
       initialProps: {
-        defaultValue: DEFAULT_LOGIN_VALUES,
+        defaultValues: DEFAULT_LOGIN_VALUES,
       },
     });
 
     act(() => {
-      result.current.email.set('foo@bar.com');
-      result.current.password.set('Password123');
-      result.current.session.set(true);
+      result.current.email.onChange(makeChangeEvent('foo@bar.com'));
+      result.current.password.onChange(makeChangeEvent('Password123'));
+      result.current.session.onChange(makeChangeEvent(true));
     });
 
     act(() => {
@@ -160,15 +219,15 @@ describe('createForm', () => {
     }: {
       callback: (fileList: FileList | null) => void;
     }) {
-      const { myField } = useContext(FileForm.Context);
+      const { myField, handleFileEvent, getFiles } = useForm(FileForm);
       return (
         <>
           <input
             data-testid="myField"
             id={myField.name}
-            onChange={myField.handleFileEvent}
+            onChange={handleFileEvent('myField')}
           />
-          <button onClick={() => callback(myField.getFiles())}>
+          <button onClick={() => callback(getFiles('myField'))}>
             GET_FILES
           </button>
         </>
@@ -183,7 +242,7 @@ describe('createForm', () => {
       <FileFormComponent callback={callback} />,
       {
         wrapper: ({ children }) => (
-          <FileForm.Provider defaultValue={{ myField: '' }}>
+          <FileForm.Provider defaultValues={{ myField: '' }}>
             {children}
           </FileForm.Provider>
         ),
@@ -202,15 +261,15 @@ describe('createForm', () => {
 
   test('form.toJSON', () => {
     const LoginForm = createForm<Login>();
-    const { result } = renderHook(() => useContext(LoginForm.Context), {
+    const { result } = renderHook(() => useForm(LoginForm), {
       wrapper: LoginForm.Provider,
       initialProps: {
-        defaultValue: DEFAULT_LOGIN_VALUES,
+        defaultValues: DEFAULT_LOGIN_VALUES,
       },
     });
     act(() => {
-      result.current.email.set('foo@gmail.com');
-      result.current.password.set('password');
+      result.current.email.onChange(makeChangeEvent('foo@gmail.com'));
+      result.current.password.onChange(makeChangeEvent('password'));
     });
     const json = result.current.toJSON();
     expect(json).toEqual({
@@ -222,15 +281,15 @@ describe('createForm', () => {
 
   test('form.toFormData', () => {
     const LoginForm = createForm<Login>();
-    const { result } = renderHook(() => useContext(LoginForm.Context), {
+    const { result } = renderHook(() => useForm(LoginForm), {
       wrapper: LoginForm.Provider,
       initialProps: {
-        defaultValue: DEFAULT_LOGIN_VALUES,
+        defaultValues: DEFAULT_LOGIN_VALUES,
       },
     });
     act(() => {
-      result.current.email.set('foo@gmail.com');
-      result.current.password.set('password');
+      result.current.email.onChange(makeChangeEvent('foo@gmail.com'));
+      result.current.password.onChange(makeChangeEvent('password'));
     });
     const formData = result.current.toFormData();
     expect(formData.get('email')).toEqual('foo@gmail.com');
@@ -238,24 +297,24 @@ describe('createForm', () => {
     expect(formData.get('session')).toEqual('false');
   });
 
-  test('form.toURLSearchParams', () => {
-    const LoginForm = createForm<Login>();
-    const { result } = renderHook(() => useContext(LoginForm.Context), {
-      wrapper: LoginForm.Provider,
-      initialProps: {
-        defaultValue: DEFAULT_LOGIN_VALUES,
-      },
-    });
-    act(() => {
-      result.current.email.set('foo@gmail.com');
-      result.current.password.set('password');
-    });
-    const urlSearchParams = result.current.toURLSearchParams();
-    expect(urlSearchParams.get('email')).toEqual('foo%40gmail.com');
-    expect(urlSearchParams.get('password')).toEqual('password');
-    expect(urlSearchParams.get('session')).toEqual('false');
-    expect(urlSearchParams.toString()).toEqual(
-      'email=foo%2540gmail.com&password=password&session=false',
-    );
-  });
+  // test('form.toURLSearchParams', () => {
+  //   const LoginForm = createForm<Login>();
+  //   const { result } = renderHook(() => useForm(LoginForm), {
+  //     wrapper: LoginForm.Provider,
+  //     initialProps: {
+  //       defaultValues: DEFAULT_LOGIN_VALUES,
+  //     },
+  //   });
+  //   act(() => {
+  //     result.current.email.onChange(makeChangeEvent('foo@gmail.com'));
+  //     result.current.password.onChange(makeChangeEvent('password'));
+  //   });
+  //   const urlSearchParams = result.current.toURLSearchParams();
+  //   expect(urlSearchParams.get('email')).toEqual('foo%40gmail.com');
+  //   expect(urlSearchParams.get('password')).toEqual('password');
+  //   expect(urlSearchParams.get('session')).toEqual('false');
+  //   expect(urlSearchParams.toString()).toEqual(
+  //     'email=foo%2540gmail.com&password=password&session=false',
+  //   );
+  // });
 });

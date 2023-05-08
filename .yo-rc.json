@@ -1,10 +1,10 @@
 {
   "@anansi/generator-js": {
-    "githubOrg": "taystack",
+    "githubOrg": "react-noui",
     "rootPath": "src",
     "assetPath": "dist",
     "serverPath": "dist-server",
-    "appName": "use-form",
+    "appName": "create-form",
     "githubDomain": "github.com",
     "testing": true,
     "features": [

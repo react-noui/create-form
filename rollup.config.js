@@ -1,10 +1,10 @@
-import commonjs from 'rollup-plugin-commonjs';
-import resolve from 'rollup-plugin-node-resolve';
 import babel from 'rollup-plugin-babel';
-import json from 'rollup-plugin-json';
-import { terser } from 'rollup-plugin-terser';
+import commonjs from 'rollup-plugin-commonjs';
 import filesize from 'rollup-plugin-filesize';
+import json from 'rollup-plugin-json';
+import resolve from 'rollup-plugin-node-resolve';
 import replace from 'rollup-plugin-replace';
+import { terser } from 'rollup-plugin-terser';
 
 import pkg from './package.json';
 
@@ -30,10 +30,12 @@ export default [
   {
     input: 'src/index.ts',
     external: isExternal,
-    output: [{ file: pkg.unpkg, format: 'umd', name: 'use-form' }],
+    output: [
+      { file: pkg.unpkg, format: 'umd', name: '@react-noui/create-form' },
+    ],
     plugins: [
       babel({
-        exclude: ['node_modules/**', '**/__tests__/**'],
+        exclude: ['node_modules/**', '**/__tests__/**', '**/stories/**'],
         extensions,
         runtimeHelpers: true,
       }),

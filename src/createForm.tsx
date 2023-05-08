@@ -1,197 +1,210 @@
-import React from 'react';
+import {
+  ChangeEvent,
+  createContext,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+
+import { makeField } from 'makeField';
+import { makeOptions } from 'makeOptions';
+import {
+  FieldSetters,
+  FormContext,
+  FormContextErrors,
+  FormContextFiles,
+  FormFields,
+  PrimitiveRecord,
+  CreateFormOptions,
+  CreateForm,
+  CreateFormProviderProps,
+} from 'types';
+import { isFileList } from 'utils';
 
 export function createForm<T extends PrimitiveRecord>(
-  options?: UseFormOptions<T>,
+  options?: CreateFormOptions<T> | undefined,
 ) {
-  const Context = React.createContext<UseFormContext<T>>({
-    resetAll: () => undefined,
-    toFormData: () => new FormData(),
-    toJSON: () => ({}),
-    toURLSearchParams: () => new URLSearchParams(),
-  } as UseFormContext<T>);
-  function Provider({ defaultValue: obj, children }: UseFormProviderProps<T>) {
-    const [complexState, setComplexState] = React.useState(() => ({
-      ...obj,
-    }));
-    const files = React.useRef({} as Record<string & keyof T, FileList | null>);
-    const fileText = React.useRef({} as Record<string & keyof T, string[]>);
+  const opts = makeOptions<T>(options);
 
-    const [error, setComplexStateError] = React.useState<UseFormErrors<T>>(() =>
-      Object.keys(obj).reduce(
+  const Context = createContext<FormContext<T>>({
+    toJSON: () => ({}),
+    toFormData: () => new FormData(),
+    validateAll: () => Promise.resolve({}),
+    resetAll: () => {
+      /*  noop*/
+    },
+    options: opts,
+  } as FormContext<T>);
+
+  function Provider({
+    defaultValues = {} as T,
+    ...props
+  }: CreateFormProviderProps<T>) {
+    const keys = useMemo(
+      () => Object.keys(defaultValues) as (string & keyof T)[],
+      [defaultValues],
+    );
+    const [state, setState] = useState(() => ({
+      ...defaultValues,
+    }));
+    const [errors, setErrorState] = useState(() =>
+      keys.reduce(
         (map, key) => ({
           ...map,
-          [key]: undefined,
+          [key]: '',
         }),
-        {},
+        {} as FormContextErrors<T>['errors'],
       ),
     );
+    const files = useRef({} as FormContextFiles<T>);
 
-    const setError = React.useMemo(
+    const setters = useMemo(
       () =>
-        (Object.keys(obj) as (string & keyof T)[]).reduce((map, key) => {
-          return {
-            ...map,
-            [key]: (error?: string) => {
-              setComplexStateError((old) => ({
-                ...old,
-                [key]: error,
-              }));
-            },
-          };
-        }, {} as UseFormSetError<T>),
-      [setComplexStateError, obj],
-    );
-
-    const name = React.useMemo(
-      () =>
-        Object.keys(obj).reduce(
-          (map, key) => ({
-            ...map,
-            [key]: Math.random().toString().split('.')[1],
-          }),
-          {},
-        ),
-      [obj],
-    ) as UseFormNames<T>;
-
-    const setCurrent = React.useMemo(
-      () =>
-        (Object.keys(obj) as (string & keyof T)[]).reduce((map, key) => {
+        keys.reduce((map, key) => {
           return {
             ...map,
             [key]: (value: T[typeof key]) => {
-              const validateFn =
-                options && options.validate && options.validate[key];
+              const validateFn = opts && opts.validate && opts.validate[key];
               if (validateFn) {
-                const error = validateFn(value, obj);
-                setComplexStateError((old) => ({
+                const error = validateFn(value, defaultValues) || '';
+                setErrorState((old) => ({
                   ...old,
                   [key]: error,
                 }));
               }
-              setComplexState((old) => ({ ...old, [key]: value }));
+              setState((old) => ({ ...old, [key]: value }));
             },
           };
-        }, {} as UseFormSetters<T>),
-      [setComplexState, setComplexStateError, obj],
+        }, {} as FieldSetters<T>),
+      [setState, defaultValues, keys],
     );
 
-    const reset = React.useMemo(
+    const fields: FormFields<T> & (typeof opts)['props'] = useMemo(
       () =>
-        Object.keys(obj).reduce(
+        keys.reduce((map, name: string & keyof T) => {
+          return {
+            ...map,
+            [name]: {
+              ...((opts.props && opts.props[name]) || {}),
+              ...makeField(name, state[name], setters[name]),
+            },
+          };
+        }, {} as FormFields<T> & (typeof opts)['props']),
+      [keys, state, setters],
+    );
+
+    const toJSON = useCallback(
+      () =>
+        keys.reduce(
           (map, key) => ({
             ...map,
-            [key]: () => {
-              delete files.current[key];
-              delete fileText.current[key];
-              setComplexState((old) => ({
-                ...old,
-                [key]: obj[key],
-              }));
-              setComplexStateError((old) => ({
-                ...old,
-                [key]: undefined,
-              }));
-            },
+            [key]: state[key],
           }),
-          {} as UseFormReset<T>,
+          {} as Partial<T>,
         ),
-      [setComplexState, setComplexStateError, obj],
+      [state, keys],
     );
 
-    const resetAll = React.useCallback(() => {
-      files.current = {} as Record<string & keyof T, FileList | null>;
-      fileText.current = {} as Record<string & keyof T, string[]>;
-      setComplexState(() => obj);
-      setComplexStateError(() => ({}));
-    }, [setComplexState, setComplexStateError, obj]);
-
-    const toFormData = React.useCallback(() => {
-      const formData = new FormData();
-      Object.keys(complexState).forEach((key) => {
-        const fileList = files.current[key];
-        if (fileList) {
-          for (let i = 0; i < fileList.length; i++) {
-            const file = fileList.item(i);
-            if (file !== null) {
-              formData.append(key, file, file.name);
+    const validateAll = useCallback(async () => {
+      const errors = await new Promise<FormContextErrors<T>['errors']>(
+        (resolve) => {
+          const errorsReduced = keys.reduce((map, key) => {
+            const validateFn = opts && opts.validate && opts.validate[key];
+            let err: string | undefined;
+            if (validateFn) {
+              err = validateFn(state[key], state);
             }
-          }
-        } else {
-          formData.set(key, `${complexState[key]}`);
-        }
+            return {
+              ...map,
+              [key]: err || '',
+            };
+          }, {} as FormContextErrors<T>['errors']);
+          resolve(errorsReduced);
+        },
+      );
+      setErrorState(() => errors);
+      return errors;
+    }, [keys, state, setErrorState]);
+
+    const setError = useCallback(
+      (key: keyof T, error?: string | undefined) => {
+        setErrorState((old) => ({
+          ...old,
+          [key]: error || '',
+        }));
+      },
+      [setErrorState],
+    );
+
+    const reset = useCallback(
+      (key: keyof T) => {
+        setState((old) => ({
+          ...old,
+          [key]: defaultValues[key],
+        }));
+      },
+      [setState, defaultValues],
+    );
+
+    const resetAll = useCallback(() => {
+      setState(() => defaultValues);
+      files.current = {};
+    }, [setState, defaultValues]);
+
+    const toFormData = useCallback(() => {
+      const formData = new FormData();
+      keys.forEach((key) => {
+        formData.set(key, `${state[key]}`);
       });
       return formData;
-    }, [complexState]);
+    }, [keys, state]);
 
-    const toJSON = React.useCallback(() => complexState, [complexState]);
-
-    const toURLSearchParams = React.useCallback(() => {
-      const params = new URLSearchParams();
-      Object.keys(complexState).forEach((key) => {
-        params.set(key, encodeURIComponent(`${complexState[key]}`));
-      });
-      return params;
-    }, [complexState]);
-
-    const handleFileEvent = React.useMemo(
-      () =>
-        Object.keys(obj).reduce(
-          (map, key: string & keyof T) => ({
-            ...map,
-            [key]: (event: React.ChangeEvent<HTMLInputElement>) => {
-              setCurrent[key](event.target.value as T[typeof key]);
-              if (event.target.files) {
-                files.current[key] = event.target.files;
-              }
-            },
-          }),
-          {} as UseFormHandleFileEvent<T>,
-        ),
-      [obj, setCurrent],
+    const handleFileEvent = useCallback(
+      (key: keyof T) => {
+        return (event: ChangeEvent<HTMLInputElement>) => {
+          const eventFiles = event.target.files;
+          files.current[key] = eventFiles;
+          const filenames: string[] = [];
+          if (isFileList(eventFiles)) {
+            Array.from(eventFiles).forEach((file) => filenames.push(file.name));
+          }
+          const next = { [key]: filenames.join(',') };
+          setState((old) => ({
+            ...old,
+            ...next,
+          }));
+        };
+      },
+      [setState],
     );
 
-    const fields = React.useMemo(
-      () =>
-        Object.keys(obj).reduce(
-          (map, key) => ({
-            ...map,
-            [key]: {
-              current: complexState[key],
-              default: obj[key],
-              error: error[key],
-              name: name[key],
-              getFiles: () => files.current[key],
-              handleFileEvent: handleFileEvent[key],
-              reset: reset[key],
-              set: setCurrent[key],
-              setError: setError[key],
-            } as UseFormFields<T>,
-          }),
-          {} as UseFormFields<T>,
-        ),
-      [
-        obj,
-        complexState,
-        setCurrent,
-        error,
-        reset,
-        setError,
-        name,
-        handleFileEvent,
-      ],
-    );
+    const getFiles = useCallback((key: keyof T) => files.current[key], []);
 
     return (
       <Context.Provider
-        value={{ ...fields, resetAll, toFormData, toJSON, toURLSearchParams }}
-      >
-        {children}
-      </Context.Provider>
+        value={
+          {
+            ...fields,
+            errors,
+            setters,
+            validateAll,
+            setError,
+            reset,
+            resetAll,
+            handleFileEvent,
+            getFiles,
+            toFormData,
+            toJSON,
+            options: opts,
+          } as FormContext<T>
+        }
+        {...props}
+      />
     );
   }
   return {
-    Provider,
     Context,
-  };
+    Provider,
+  } as CreateForm<T>;
 }

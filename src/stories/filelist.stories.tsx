@@ -1,6 +1,5 @@
-import { useContext } from 'react';
-
 import { createForm } from 'createForm';
+import { useForm, useFormFileField } from 'hooks/controlled';
 
 export default { title: 'forms/FileListForm' };
 
@@ -16,27 +15,22 @@ const FileListForm = createForm<FileListForm>();
 
 function withFileListForm() {
   return (
-    <FileListForm.Provider defaultValue={DEFAULT_LOGIN}>
+    <FileListForm.Provider defaultValues={DEFAULT_LOGIN}>
       <FileListFormComponent />
     </FileListForm.Provider>
   );
 }
 
 function FileListFormComponent() {
-  const form = useContext(FileListForm.Context);
+  const form = useForm(FileListForm);
+  const fileField = useFormFileField(FileListForm, form.myFileField);
 
   return (
     <div
       style={{ display: 'flex', flexDirection: 'column', width: 500, gap: 8 }}
     >
-      <label htmlFor={form.myFileField.name}>Select files to upload</label>
-      <input
-        type="file"
-        value={form.myFileField.current}
-        name={form.myFileField.name}
-        onChange={form.myFileField.handleFileEvent}
-        id={form.myFileField.name}
-      />
+      <label htmlFor={fileField.name}>Select files to upload</label>
+      <input type="file" multiple {...fileField} />
       <button onClick={() => form.resetAll()}>Reset</button>
       <pre>{JSON.stringify(form, null, 2)}</pre>
     </div>

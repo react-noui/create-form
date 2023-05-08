@@ -23,5 +23,5 @@
     "declarationMap": true
   },
   "include": ["src"],
-  "exclude": ["node_modules", "libPath", "dist"]
+  "exclude": ["node_modules", "libPath", "dist", "lib"]
 }
