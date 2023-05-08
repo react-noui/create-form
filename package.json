@@ -44,7 +44,6 @@
   "types": "lib/index.d.ts",
   "files": [
     "src",
-    "dist",
     "lib",
     "LICENSE",
     "README.md"
