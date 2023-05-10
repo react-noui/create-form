@@ -28,6 +28,9 @@ export const loginForm = () => {
       password: {
         placeholder: 'Password',
       },
+      session: {
+        type: 'checkbox',
+      },
     },
   });
 
@@ -70,10 +73,10 @@ export const loginForm = () => {
           <input {...password} type="password" autoComplete="off" />
 
           <label>
-            <input type="checkbox" {...session} />
+            <input {...session} />
             <label htmlFor={session.id}>Keep me logged in</label>
           </label>
-          {/* <button onClick={() => form.resetAll()}>Reset</button> */}
+          <button onClick={() => form.resetAll()}>Reset</button>
         </div>
         <pre>
           <div>STATE:</div>
@@ -86,6 +89,7 @@ export const loginForm = () => {
       </div>
     );
   }
+
   return (
     <LoginForm.Provider defaultValues={DEFAULT_LOGIN}>
       <LoginFormComponent />
