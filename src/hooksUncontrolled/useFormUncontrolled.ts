@@ -5,7 +5,7 @@ import {
   UncontrolledTextField,
   UncontrolledNumberField,
   CreateFormUncontrolled,
-} from 'types';
+} from '../types';
 
 export function useFormUncontrolled<T extends PrimitiveRecord>(
   form: CreateFormUncontrolled<T>,

@@ -176,3 +176,9 @@ export type FormUncontrolAlgo<R extends Primitive> = R extends boolean
 export type FormFieldsUncontrolled<T extends PrimitiveRecord> = {
   [K in keyof T]: FormUncontrolAlgo<T[K]>;
 };
+
+export type RequiredOptions<P extends Primitive> = {
+  value: P;
+  label: string;
+};
+

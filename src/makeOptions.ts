@@ -4,7 +4,7 @@ import {
   CreateFormOptions,
   CreateFormUncontrolledOptions,
   UncontrolledOptions,
-} from 'types';
+} from './types';
 
 export function makeOptions<T extends PrimitiveRecord>(
   options?: CreateFormOptions<T>,

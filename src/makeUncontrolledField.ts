@@ -4,7 +4,7 @@ import {
   UncontrolledTextField,
   FormUncontrolAlgo,
   Primitive,
-} from 'types';
+} from './types';
 
 const isBoolean = (value: any): value is boolean => typeof value === 'boolean';
 const isNumber = (value: any): value is number => typeof value === 'number';

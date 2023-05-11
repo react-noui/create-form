@@ -1,4 +1,4 @@
-import {
+import React, {
   ChangeEvent,
   createContext,
   useCallback,
@@ -7,8 +7,8 @@ import {
   useState,
 } from 'react';
 
-import { makeField } from 'makeField';
-import { makeOptions } from 'makeOptions';
+import { makeField } from './makeField';
+import { makeOptions } from './makeOptions';
 import {
   FieldSetters,
   FormContext,
@@ -19,8 +19,8 @@ import {
   CreateFormOptions,
   CreateForm,
   CreateFormProviderProps,
-} from 'types';
-import { isFileList } from 'utils';
+} from './types';
+import { isFileList } from './utils';
 
 export function createForm<T extends PrimitiveRecord>(
   options?: CreateFormOptions<T> | undefined,
