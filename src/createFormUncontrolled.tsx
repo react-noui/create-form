@@ -1,14 +1,14 @@
-import { PropsWithChildren, createContext, useMemo } from 'react';
+import React, { PropsWithChildren, createContext, useMemo } from 'react';
 
-import { makeOptionsUncontrolled } from 'makeOptions';
-import { makeUncontrolledField } from 'makeUncontrolledField';
+import { makeOptionsUncontrolled } from './makeOptions';
+import { makeUncontrolledField } from './makeUncontrolledField';
 import {
   CreateFormUncontrolled,
   CreateFormUncontrolledOptions,
   FormContextUncontrolled,
   FormFieldsUncontrolled,
   PrimitiveRecord,
-} from 'types';
+} from './types';
 
 export function createFormUncontrolled<T extends PrimitiveRecord>(
   options?: CreateFormUncontrolledOptions<T> | undefined,

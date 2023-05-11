@@ -1,3 +1,3 @@
 module.exports = {
-  presets: [['@anansi', { typing: 'typescript' }], '@linaria'],
-};
+  presets: ["@babel/preset-env", "@babel/preset-react", "@babel/preset-typescript"],
+}

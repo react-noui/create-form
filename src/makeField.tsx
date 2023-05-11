@@ -6,10 +6,8 @@ import {
   ControlledTextField,
   FormControlAlgo,
   Primitive,
-} from 'types';
-
-const isBoolean = (value: any): value is boolean => typeof value === 'boolean';
-const isNumber = (value: any): value is number => typeof value === 'number';
+} from './types';
+import { isBoolean, isNumber } from './utils';
 
 export function makeField<V extends Primitive>(
   key: string,
