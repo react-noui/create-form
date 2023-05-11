@@ -1,6 +1,16 @@
-import { useMemo, ChangeEvent } from "react";
-import { ControlledTextField, ControlledNumberField, ControlledTextSelectField, ControlledNumberSelectField, PrimitiveRecord, CreateForm, ControlledMultiOptionSelect, RequiredOptions } from "../types";
-import { useForm } from "./useForm";
+import { useMemo, ChangeEvent } from 'react';
+
+import { useForm } from './useForm';
+import {
+  ControlledTextField,
+  ControlledNumberField,
+  ControlledTextSelectField,
+  ControlledNumberSelectField,
+  PrimitiveRecord,
+  CreateForm,
+  ControlledMultiOptionSelect,
+  RequiredOptions,
+} from '../types';
 
 type SelectFieldAlgo<
   Field extends ControlledTextField | ControlledNumberField,
@@ -40,7 +50,7 @@ export function useFormSelectField<
 }
 
 function useSelectOptions<
-  Field extends ControlledTextField | ControlledNumberField
+  Field extends ControlledTextField | ControlledNumberField,
 >(field: Field, options: RequiredOptions<Field['value']>[]) {
   return useMemo(
     () =>

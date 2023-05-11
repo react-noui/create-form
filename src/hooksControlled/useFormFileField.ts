@@ -1,6 +1,7 @@
-import { useMemo } from "react";
-import { PrimitiveRecord, CreateForm, ControlledTextField } from "../types";
-import { useForm } from "./useForm";
+import { useMemo } from 'react';
+
+import { useForm } from './useForm';
+import { PrimitiveRecord, CreateForm, ControlledTextField } from '../types';
 
 export function useFormFileField<T extends PrimitiveRecord>(
   targetForm: CreateForm<T>,

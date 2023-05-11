@@ -1,4 +1,6 @@
-import { useMemo, ChangeEvent } from "react";
+import { useMemo, ChangeEvent } from 'react';
+
+import { useForm } from './useForm';
 import {
   ControlledTextField,
   ControlledNumberField,
@@ -8,8 +10,7 @@ import {
   CreateForm,
   RequiredOptions,
   ControlledMultiOptionRadio,
-} from "../types";
-import { useForm } from "./useForm";
+} from '../types';
 
 type RadioFieldAlgo<Field extends ControlledTextField | ControlledNumberField> =
   Field extends ControlledTextField

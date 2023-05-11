@@ -1,5 +1,8 @@
-module.exports = {
-  preset: '@anansi/jest-preset',
+// module.exports = {
+//   "transform": { "^.+\\.tsx$": "ts-jest", "^.+\\.ts$": "ts-jest" }
+// }
+const config = {
   testEnvironment: 'jsdom',
-  modulePaths: ['src'],
+  roots: ['src'],
 };
+module.exports = config;
