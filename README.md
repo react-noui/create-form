@@ -17,6 +17,81 @@ yarn add @react-noui/create-form
 This library employs the factory pattern when creating the data-layer for your form controls.
 If you are familiar with `React.createContext` then you will be familiar with how to use this library.
 
+# Example
+`createForm` creates the state management for Controlled inputs. This example uses 
+```tsx
+type Todo = {
+  userId: number;
+  title: string;
+  completed: boolean;
+}
+const TodoForm = createForm<Todo>({
+  props: {
+    completed: {
+      type: 'checkbox',
+    },
+    title: {
+      placeholder: 'What needs to be done?',
+    },
+    userId: {
+      type: 'hidden', // required, but only for fetch
+    },
+  },
+});
+function CreateTodo({ user }: { user: User }) {
+  return (
+    <TodoForm.Provider defaultValues={{ userId: user.id, title: '', completed: false }}>
+      <TodoCompleted />
+      <TodoTitle />
+      <TodoUserId />
+      <CreateTodoSave />
+    </TodoForm.Provider>
+  );
+}
+function EditTodo({ user, todo }: { user: User, todo: Todo }) {
+  return (
+    <TodoForm.Provider defaultValues={todo}>
+      <TodoCompleted />
+      <TodoTitle />
+      <TodoUserId />
+      <EditTodoSave todoId={todo.id} />
+    </TodoForm.Provider>
+  );
+}
+function TodoCompleted() {
+  const { completed } = useForm(TodoForm);
+  return <input {...completed} />
+}
+function TodoTitle() {
+  const { title } = useForm(TodoForm);
+  return <input {...title} />
+}
+function TodoUserId() {
+  const { userId } = useForm(TodoForm);
+  return <input {...userId} />
+}
+function EditTodoSave({ todoId }: { todoId: number }) {
+  const form = useForm(TodoForm);
+  const handleClick = useCallback(() => {
+    fetch(`https://jsonplaceholder.typicode.com/todos/${todoId}`, {
+      method: 'PUT',
+      body: JSON.stringify(form.toJSON()),
+    });
+  }, [form, todoId]);
+  return <button onClick={handleClick}>Update</button>
+}
+function CreateTodoSave() {
+  const form = useForm(TodoForm);
+  const handleClick = useCallback(() => {
+    fetch('https://jsonplaceholder.typicode.com/todos', {
+      method: 'POST',
+      body: JSON.stringify(form.toJSON()),
+    });
+  }, [form]);
+  return <button onClick={handleClick}>Create</button>
+}
+```
+
 ## Controlled
 
 ### `const MyForm = createForm<T>(options? = {})`
