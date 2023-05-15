@@ -51,6 +51,9 @@ export type ControlledTextRadioField = ControlledTextField & {
 export type ControlledNumberRadioField = ControlledNumberField & {
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
 };
+export type ControlledTextAreaField = ControlledTextField & {
+  onChange: (event: ChangeEvent<HTMLTextAreaElement>) => void;
+};
 
 export type FieldSetters<T> = {
   [K in keyof T]: (next: T[K]) => void;
