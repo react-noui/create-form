@@ -8,9 +8,7 @@ import {
   ControlledTextAreaField,
 } from '../types';
 
-export function useFormTextAreaField<
-  T extends PrimitiveRecord,
->(
+export function useFormTextAreaField<T extends PrimitiveRecord>(
   targetForm: CreateForm<T>,
   field: ControlledTextField,
 ) {
@@ -25,6 +23,6 @@ export function useFormTextAreaField<
         },
       },
       value,
-    ] as [ControlledTextAreaField & typeof form['options']['props'], string];
+    ] as [ControlledTextAreaField & (typeof form)['options']['props'], string];
   }, [form, field]);
 }
